@@ -18,9 +18,9 @@ Provider is set by `LLM_PROVIDER` in `.env` (`gemini`, `groq` or `anthropic`) or
 Run the attack suite from the command line:
 
 ```powershell
-python -m src.eval --versions v1 v2 v3            # full suite, writes reports/
-python -m src.eval --versions v1 v3 --delay 4     # slower, for free-tier rate limits
-python -m src.eval --versions v3 --only A06 B03   # selected cases
+python -m src.eval --versions v1 v2 v3 v4         # full suite, writes reports/
+python -m src.eval --versions v1 v4 --delay 4     # slower, for free-tier rate limits
+python -m src.eval --versions v4 --only A06 B03   # selected cases
 python -m pytest -q                               # offline tests, no API key needed
 ```
 
@@ -29,7 +29,7 @@ python -m pytest -q                               # offline tests, no API key ne
 ```
 document --> [Gate] --> [L1 Scanner] --> [L2 Spotlighting + L3 Defence prompt] --> LLM
                                                                                    |
-     user <-- [L5 Self-critique (v3)] <-- [L4 Output checks: JSON, refusal, leak, links]
+     user <-- [L5 Self-critique (v3+)] <-- [L4 Output checks: JSON, refusal, leak, links]
 ```
 
 | Layer | Where | What it does |
@@ -37,11 +37,11 @@ document --> [Gate] --> [L1 Scanner] --> [L2 Spotlighting + L3 Defence prompt] -
 | Gate | code `src/scanner.py` | Rejects empty, chat-style or non-document input (< 25 words) |
 | L1 Scanner | code `src/scanner.py` | 13 regex pattern families; decodes base64 and scans it; strips zero-width characters and hidden HTML comments |
 | L2 Spotlighting | prompt `prompts/v2_user.md` | Document wrapped in a random boundary `<<DOC_XXXXXXXX>>` that changes on every request |
-| L3 Defence prompt | prompt `prompts/v3_system.md` | Priority rules, sandwich reminder after the document, silent self-check, 3 few-shot examples |
-| L4 Output checks | code `src/validator.py` | JSON schema with one repair retry, refusal detection with retry, system-tag leak redaction, removal of links taken from injected text |
+| L3 Defence prompt | prompt `prompts/v4_system.md` | Priority rules, sandwich reminder after the document, silent self-check, 3 few-shot examples |
+| L4 Output checks | code `src/validator.py` | JSON schema with one repair retry, refusal detection with retry, system-tag leak redaction, removal of links taken from injected text, replacement of notes that quote the attack |
 | L5 Self-critique | prompt `prompts/critic_system.md` | A second model call audits the summary and rewrites it if it was compromised |
 
-**Prompt versions:** v1 naive baseline, v2 defended prompt + spotlighting + JSON + code checks, v3 (final) = v2 + few-shot + self-critique chain.
+**Prompt versions:** v1 naive baseline, v2 defended prompt + spotlighting + JSON + code checks, v3 = v2 + few-shot + self-critique chain, v4 (final) = v3 + "never quote the attack in notes" rule.
 
 **Prompting techniques combined:** role and rule prompting, spotlighting with delimiters, sandwich defence, few-shot examples, prompt chaining with self-critique, and structured JSON output validated in code.
 
