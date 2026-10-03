@@ -47,9 +47,9 @@ with st.sidebar:
         "- **Gate**: rejects empty / non-document input\n"
         "- **L1 Scanner**: regex patterns, base64 decode, hidden HTML & zero-width removal\n"
         "- **L2 Spotlighting**: random boundary per request\n"
-        "- **L3 Defence prompt**: rules, sandwich reminder, few-shot (v3)\n"
+        "- **L3 Defence prompt**: rules, sandwich reminder, few-shot (v3+)\n"
         "- **L4 Output checks**: JSON schema + repair retry, refusal retry, leak & link redaction\n"
-        "- **L5 Self-critique** (v3): second prompt audits and rewrites"
+        "- **L5 Self-critique** (v3+): second prompt audits and rewrites"
     )
 
 
@@ -121,11 +121,11 @@ tab_sum, tab_cmp, tab_suite, tab_rep, tab_prompts = st.tabs(
 # ---------- Summarize ----------
 with tab_sum:
     doc = document_input("sum")
-    version = st.segmented_control("Prompt version", prompts.VERSIONS, default="v3", key="sum_version",
+    version = st.segmented_control("Prompt version", prompts.VERSIONS, default="v4", key="sum_version",
                                    format_func=lambda v: prompts.VERSION_LABELS[v])
     if st.button("Summarize", type="primary", icon=":material/play_arrow:", key="sum_run"):
         with st.spinner("Running defence pipeline..."):
-            st.session_state.sum_res = pipeline.run(doc, version or "v3", CFG)
+            st.session_state.sum_res = pipeline.run(doc, version or "v4", CFG)
     if "sum_res" in st.session_state:
         show_result(st.session_state.sum_res)
 
@@ -145,7 +145,7 @@ with tab_cmp:
         with st.container(border=True):
             st.markdown("**Right**")
             if mode == "Two prompt versions":
-                rv = st.selectbox("Version", prompts.VERSIONS, index=2, key="cmp_rv", format_func=prompts.VERSION_LABELS.get)
+                rv = st.selectbox("Version", prompts.VERSIONS, index=3, key="cmp_rv", format_func=prompts.VERSION_LABELS.get)
                 rcfg = CFG
                 st.caption(f"Model: {CFG.provider}/{CFG.model}")
             else:
@@ -172,7 +172,7 @@ with tab_suite:
                f"{sum(c['kind'] == 'benign' for c in CASES)} benign, {sum(c['kind'] == 'offtopic' for c in CASES)} off-topic.")
     with st.expander("View test set"):
         st.dataframe(pd.DataFrame(CASES)[["id", "kind", "type", "title", "success_markers", "key_facts"]], hide_index=True)
-    versions = st.multiselect("Versions", prompts.VERSIONS, default=["v1", "v3"], key="suite_versions")
+    versions = st.multiselect("Versions", prompts.VERSIONS, default=["v1", "v4"], key="suite_versions")
     ids = st.multiselect("Cases (empty = all)", [c["id"] for c in CASES], key="suite_ids")
     delay = st.slider("Delay between calls (s) - raise this on free-tier rate limits", 0.0, 10.0, 0.0, 0.5)
     if st.button("Run attack suite", type="primary", icon=":material/play_arrow:", disabled=not versions):
