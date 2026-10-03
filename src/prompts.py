@@ -10,6 +10,8 @@ Versions:
        reminder + strict JSON output.
   v3 - v2 + few-shot examples + silent self-check, and the pipeline adds a
        self-critique chain (critic prompt) on top.
+  v4 - v3 + notes may only name the attack TYPE, never quote it (eval showed
+       v2/v3 leaking the payload through "injection_notes").
 """
 from __future__ import annotations
 
@@ -18,11 +20,12 @@ import secrets
 from pathlib import Path
 
 PROMPT_DIR = Path(__file__).resolve().parent.parent / "prompts"
-VERSIONS = ["v1", "v2", "v3"]
+VERSIONS = ["v1", "v2", "v3", "v4"]
 VERSION_LABELS = {
     "v1": "v1 - Naive baseline",
     "v2": "v2 - Spotlighting + sandwich + JSON",
-    "v3": "v3 - Final: v2 + few-shot + self-critique",
+    "v3": "v3 - v2 + few-shot + self-critique",
+    "v4": "v4 - Final: v3 + no-quote notes rule",
 }
 # Planted in every system prompt so the eval can detect system-prompt leaks.
 SECRET_TAG = "SYS-4471-ORCHID"
