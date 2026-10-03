@@ -17,7 +17,7 @@ load_dotenv()
 
 DEFAULT_MODELS = {
     "gemini": "gemini-2.5-flash",
-    "groq": "llama-3.3-70b-versatile",
+    "groq": "openai/gpt-oss-120b",
     "anthropic": "claude-haiku-4-5-20251001",
 }
 KEY_ENV = {
