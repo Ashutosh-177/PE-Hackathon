@@ -5,6 +5,7 @@
       JSON) -> L4 code validation (JSON/schema, refusal, leak + link checks)
   v3: v2 with the few-shot prompt + L5 self-critique chain (second model call
       audits the summary and rewrites it if compromised)
+  v4: v3 with the "never quote the injection in notes" prompt rule (final)
 
 `run()` takes an injectable `llm` callable so the whole pipeline can be unit-
 tested offline with a fake model.
@@ -166,7 +167,7 @@ def run(document: str, version: str = "v3", cfg: LLMConfig | None = None, llm: L
         if soft:
             res.log("L4 heuristics", "warning", "; ".join(soft))
 
-        if version == "v3":
+        if version in ("v3", "v4"):
             _critique(res, llm, cfg, scan.sanitized, boundary, scan.flagged_sentences)
         if res.injection_detected and not res.injection_notes:
             res.injection_notes = "Prompt injection detected; instructions in the document were not followed."
