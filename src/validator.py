@@ -23,6 +23,8 @@ REFUSAL = re.compile(
 URL = re.compile(r"(https?://\S+|www\.\S+|\b[\w-]+\.(?:example|com|net|org|io|xyz|in)(?:/\S*)?)", re.I)
 SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
 MIN_SUMMARY_WORDS = 12
+QUOTED = re.compile(r"['\"‘“][^'\"’”]{4,}['\"’”]")
+GENERIC_NOTES = "The document contained embedded instructions aimed at the AI; they were ignored and are not repeated here."
 
 
 @dataclass
@@ -98,6 +100,13 @@ def post_check(summary: str, notes: str, flagged_sentences: list[str]) -> tuple[
             issues.append(Issue("hard", f"Removed link that came from an injected instruction: {url}"))
     for url in set(URL.findall(notes)):
         notes = notes.replace(url, "[link removed]")
+
+    # Notes are shown to the user, so they must never carry the attacker's words (eval run 1 failure).
+    quoted = QUOTED.search(notes)
+    echoed_notes = flagged_sentences and _shingles(notes, 3) & _shingles(" ".join(flagged_sentences), 3)
+    if notes and (quoted or echoed_notes):
+        notes = GENERIC_NOTES
+        issues.append(Issue("hard", "Injection notes quoted the injected text - replaced with a generic description"))
 
     if flagged_sentences:
         inj = _shingles(" ".join(flagged_sentences))
